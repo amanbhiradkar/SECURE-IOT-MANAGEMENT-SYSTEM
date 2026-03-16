@@ -14,7 +14,132 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          device_id: string
+          id: string
+          ip_address: string | null
+          resolved: boolean
+          severity: string
+          user_id: string | null
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          device_id: string
+          id?: string
+          ip_address?: string | null
+          resolved?: boolean
+          severity?: string
+          user_id?: string | null
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          device_id?: string
+          id?: string
+          ip_address?: string | null
+          resolved?: boolean
+          severity?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      devices: {
+        Row: {
+          created_at: string
+          device_hash: string | null
+          device_id: string
+          device_name: string
+          id: string
+          ip_address: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_hash?: string | null
+          device_id: string
+          device_name: string
+          id?: string
+          ip_address?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_hash?: string | null
+          device_id?: string
+          device_name?: string
+          id?: string
+          ip_address?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sensor_data: {
+        Row: {
+          battery: string | null
+          device_id: string
+          id: string
+          location: string | null
+          motion: string | null
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          battery?: string | null
+          device_id: string
+          id?: string
+          location?: string | null
+          motion?: string | null
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          battery?: string | null
+          device_id?: string
+          id?: string
+          location?: string | null
+          motion?: string | null
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      system_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: string | null
+          device_id: string | null
+          id: string
+          ip_address: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: string | null
+          device_id?: string | null
+          id?: string
+          ip_address?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: string | null
+          device_id?: string | null
+          id?: string
+          ip_address?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
