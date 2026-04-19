@@ -1,1 +1,4 @@
 project_id = "qrxkbuxattbgpsytnlam"
+
+[functions.record-login-attempt]
+verify_jwt = false

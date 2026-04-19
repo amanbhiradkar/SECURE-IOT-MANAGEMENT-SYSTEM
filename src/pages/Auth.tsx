@@ -28,7 +28,23 @@ const Auth = () => {
         toast.success("Check your email to confirm your account");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) {
+          try {
+            const { data } = await supabase.functions.invoke("record-login-attempt", {
+              body: { email },
+            });
+            if (data?.bruteForce) {
+              toast.error(`🚨 Brute force attack detected! ${data.attempts} failed attempts logged.`, {
+                duration: 6000,
+              });
+            } else {
+              toast.error(`${error.message} (attempt ${data?.attempts ?? "?"}/3)`);
+            }
+          } catch {
+            toast.error(error.message);
+          }
+          return;
+        }
         navigate("/");
       }
     } catch (err: any) {
