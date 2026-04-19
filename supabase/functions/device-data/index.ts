@@ -91,7 +91,14 @@ Deno.serve(async (req) => {
     }
 
     // Device is valid and active - store sensor data
-    const ts = timestamp === "auto" || !timestamp ? new Date().toISOString() : timestamp;
+    // Use the device's real timestamp if provided; only fall back to server time if missing/"auto"
+    let ts: string;
+    if (!timestamp || timestamp === "auto") {
+      ts = new Date().toISOString();
+    } else {
+      const parsed = new Date(timestamp);
+      ts = isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+    }
 
     await supabase.from("sensor_data").insert({
       device_id,
