@@ -32,7 +32,13 @@ Deno.serve(async (req) => {
       });
     }
 
-    const ip = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
+    // Extract the original client IP (first entry in x-forwarded-for chain)
+    const xff = req.headers.get("x-forwarded-for") || "";
+    const ip =
+      xff.split(",")[0].trim() ||
+      req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-real-ip") ||
+      "unknown";
 
     // Check if device exists in registry
     const { data: device } = await supabase
