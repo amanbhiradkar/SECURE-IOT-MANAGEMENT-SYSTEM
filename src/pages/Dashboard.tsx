@@ -29,8 +29,22 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchStats();
-    const interval = setInterval(fetchStats, 10000);
-    return () => clearInterval(interval);
+
+    // Real-time subscription: instantly refresh stats when any monitored table changes
+    const channel = supabase
+      .channel("dashboard-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "devices" }, fetchStats)
+      .on("postgres_changes", { event: "*", schema: "public", table: "alerts" }, fetchStats)
+      .on("postgres_changes", { event: "*", schema: "public", table: "sensor_data" }, fetchStats)
+      .subscribe();
+
+    // Light fallback poll every 30s in case realtime drops
+    const interval = setInterval(fetchStats, 30000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, []);
 
   const cards = [
