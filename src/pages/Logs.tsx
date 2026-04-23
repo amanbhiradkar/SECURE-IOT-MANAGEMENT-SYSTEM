@@ -31,6 +31,15 @@ const Logs = () => {
       setLogs((data as LogEntry[]) ?? []);
     };
     fetch();
+
+    const channel = supabase
+      .channel("logs-realtime")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "system_logs" }, (payload) => {
+        setLogs((prev) => [payload.new as LogEntry, ...prev].slice(0, 200));
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   return (

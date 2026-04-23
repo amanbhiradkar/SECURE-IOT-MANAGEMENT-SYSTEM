@@ -45,7 +45,21 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey);
     const ip = getClientIp(req);
 
-    const body = await req.json();
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      await supabase.from("system_logs").insert({
+        action: "validation_error",
+        details: "Validation error: request body must be valid JSON",
+        ip_address: ip,
+      });
+
+      return new Response(JSON.stringify({ error: "Validation error: request body must be valid JSON" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
     const { device_id, api_key, motion, battery, location, timestamp } = body;
 
     if (typeof device_id !== "string" || typeof api_key !== "string") {
