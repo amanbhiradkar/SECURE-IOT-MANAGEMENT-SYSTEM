@@ -13,11 +13,13 @@ interface LogEntry {
 }
 
 const actionColor: Record<string, string> = {
+  data_received: "text-accent",
   device_registered: "text-primary",
   device_removed: "text-warning",
   sensor_data_received: "text-accent",
   unauthorized_access: "text-destructive",
   blocked_device_attempt: "text-destructive",
+  validation_error: "text-warning",
 };
 
 const Logs = () => {
