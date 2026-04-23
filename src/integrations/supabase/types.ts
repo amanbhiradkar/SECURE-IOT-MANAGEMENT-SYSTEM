@@ -88,7 +88,7 @@ export type Database = {
           location: string | null
           motion: string | null
           timestamp: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           battery?: string | null
@@ -97,7 +97,7 @@ export type Database = {
           location?: string | null
           motion?: string | null
           timestamp?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           battery?: string | null
@@ -106,7 +106,7 @@ export type Database = {
           location?: string | null
           motion?: string | null
           timestamp?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }

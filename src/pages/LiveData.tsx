@@ -16,6 +16,12 @@ interface SensorEntry {
 const LiveData = () => {
   const [data, setData] = useState<SensorEntry[]>([]);
 
+  const getBatteryLevel = (battery: string | null) => {
+    if (!battery) return null;
+    const parsed = Number.parseFloat(battery.replace("%", ""));
+    return Number.isNaN(parsed) ? null : parsed;
+  };
+
   const fetchData = async () => {
     const { data: rows } = await supabase
       .from("sensor_data")
@@ -67,11 +73,11 @@ const LiveData = () => {
               <TableRow key={entry.id} className="border-border">
                 <TableCell className="font-display text-sm text-primary">{entry.device_id}</TableCell>
                 <TableCell>
-                  <Badge variant={entry.motion === "detected" ? "destructive" : "secondary"} className={entry.motion === "detected" ? "" : "bg-muted text-muted-foreground"}>
+                  <Badge className={entry.motion === "true" ? "bg-primary/20 text-primary border-primary/30" : "bg-muted text-muted-foreground"}>
                     {entry.motion || "—"}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-secondary-foreground font-display text-sm">{entry.battery || "—"}</TableCell>
+                <TableCell className={`font-display text-sm ${Number(getBatteryLevel(entry.battery)) < 20 ? "text-destructive font-bold" : "text-secondary-foreground"}`}>{entry.battery || "—"}</TableCell>
                 <TableCell className="text-muted-foreground text-xs font-display">{entry.location || "—"}</TableCell>
                 <TableCell className="text-muted-foreground text-xs">{new Date(entry.timestamp).toLocaleString()}</TableCell>
               </TableRow>

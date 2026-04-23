@@ -2,3 +2,6 @@ project_id = "qrxkbuxattbgpsytnlam"
 
 [functions.record-login-attempt]
 verify_jwt = false
+
+[functions.device-data]
+verify_jwt = false

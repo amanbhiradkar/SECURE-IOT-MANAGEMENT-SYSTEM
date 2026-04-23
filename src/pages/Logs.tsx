@@ -13,11 +13,13 @@ interface LogEntry {
 }
 
 const actionColor: Record<string, string> = {
+  data_received: "text-accent",
   device_registered: "text-primary",
   device_removed: "text-warning",
   sensor_data_received: "text-accent",
   unauthorized_access: "text-destructive",
   blocked_device_attempt: "text-destructive",
+  validation_error: "text-warning",
 };
 
 const Logs = () => {
@@ -29,6 +31,15 @@ const Logs = () => {
       setLogs((data as LogEntry[]) ?? []);
     };
     fetch();
+
+    const channel = supabase
+      .channel("logs-realtime")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "system_logs" }, (payload) => {
+        setLogs((prev) => [payload.new as LogEntry, ...prev].slice(0, 200));
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   return (
