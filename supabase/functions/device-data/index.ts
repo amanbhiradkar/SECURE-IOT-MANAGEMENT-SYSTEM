@@ -76,55 +76,23 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check if device exists in the user registry and matches the demo allowlist key.
-    const { data: device } = await supabase
-      .from("devices")
-      .select("*")
-      .eq("device_id", device_id)
-      .single();
-
     const expectedApiKey = authorizedDevices[device_id];
-    if (!device || !expectedApiKey || api_key !== expectedApiKey) {
+    if (!expectedApiKey || api_key !== expectedApiKey) {
       await supabase.from("alerts").insert({
         device_id,
         alert_type: "unauthorized_access",
         severity: "high",
         ip_address: ip,
-        user_id: device?.user_id ?? null,
       });
 
       await supabase.from("system_logs").insert({
         action: "unauthorized_access",
         device_id,
-        details: !device ? `Unauthorized access: unknown device "${device_id}"` : `Unauthorized access: wrong API key for "${device_id}"`,
+        details: !expectedApiKey ? `Unauthorized access: unknown device "${device_id}"` : `Unauthorized access: wrong API key for "${device_id}"`,
         ip_address: ip,
-        user_id: device?.user_id ?? null,
       });
 
       return new Response(JSON.stringify({ error: "Unauthorized access", device_id }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    if (device.status === "blocked") {
-      await supabase.from("alerts").insert({
-        device_id,
-        alert_type: "unauthorized_access",
-        severity: "high",
-        ip_address: ip,
-        user_id: device.user_id,
-      });
-
-      await supabase.from("system_logs").insert({
-        action: "unauthorized_access",
-        device_id,
-        details: `Unauthorized access: blocked device "${device_id}" attempted connection`,
-        ip_address: ip,
-        user_id: device.user_id,
-      });
-
-      return new Response(JSON.stringify({ error: "Device is blocked", device_id }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -136,7 +104,6 @@ Deno.serve(async (req) => {
         device_id,
         details: "Validation error: motion must be boolean, battery must be number, location must include lat/lng/name, and timestamp must be ISO date-time",
         ip_address: ip,
-        user_id: device.user_id,
       });
 
       return new Response(JSON.stringify({ error: "Validation error: invalid sensor payload" }), {
@@ -153,7 +120,6 @@ Deno.serve(async (req) => {
       battery: `${battery}%`,
       location: location.name,
       timestamp: ts,
-      user_id: device.user_id,
     });
 
     if (battery < 20) {
@@ -162,7 +128,6 @@ Deno.serve(async (req) => {
         alert_type: "low_battery",
         severity: "medium",
         ip_address: ip,
-        user_id: device.user_id,
       });
     }
 
@@ -171,7 +136,6 @@ Deno.serve(async (req) => {
       device_id,
       details: `Authorized data received from ${device_id}: motion=${motion}, battery=${battery}%, location=${location.name}`,
       ip_address: ip,
-      user_id: device.user_id,
     });
 
     return new Response(JSON.stringify({ success: true, device_id, timestamp: ts }), {
