@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const ts = new Date(timestamp).toISOString();
+    const ts = new Date().toISOString();
 
     await supabase.from("sensor_data").insert({
       device_id,
@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
     await supabase.from("system_logs").insert({
       action: "data_received",
       device_id,
-      details: `Authorized data received from ${device_id}: motion=${motion}, battery=${battery}%, location=${location.name}`,
+      details: `Authorized data received from ${device_id}: motion=${motion}, battery=${battery}%, location=${location.name}, received_at=${ts}`,
       ip_address: ip,
     });
 
