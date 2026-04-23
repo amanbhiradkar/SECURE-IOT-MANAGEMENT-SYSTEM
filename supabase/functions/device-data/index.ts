@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
         ip_address: ip,
       });
 
-      return new Response(JSON.stringify({ error: "device_id is required" }), {
+      return new Response(JSON.stringify({ error: "Validation error: device_id and api_key must be strings" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -96,16 +96,18 @@ Deno.serve(async (req) => {
     if (device.status === "blocked") {
       await supabase.from("alerts").insert({
         device_id,
-        alert_type: "blocked_device_attempt",
-        severity: "medium",
+        alert_type: "unauthorized_access",
+        severity: "high",
         ip_address: ip,
+        user_id: device.user_id,
       });
 
       await supabase.from("system_logs").insert({
-        action: "blocked_device_attempt",
+        action: "unauthorized_access",
         device_id,
-        details: `Blocked device "${device_id}" attempted connection`,
+        details: `Unauthorized access: blocked device "${device_id}" attempted connection`,
         ip_address: ip,
+        user_id: device.user_id,
       });
 
       return new Response(JSON.stringify({ error: "Device is blocked", device_id }), {
@@ -114,29 +116,46 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Device is valid and active - store sensor data
-    // Use the device's real timestamp if provided; only fall back to server time if missing/"auto"
-    let ts: string;
-    if (!timestamp || timestamp === "auto") {
-      ts = new Date().toISOString();
-    } else {
-      const parsed = new Date(timestamp);
-      ts = isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+    if (typeof motion !== "boolean" || typeof battery !== "number" || !isValidLocation(location) || !isValidTimestamp(timestamp)) {
+      await supabase.from("system_logs").insert({
+        action: "validation_error",
+        device_id,
+        details: "Validation error: motion must be boolean, battery must be number, location must include lat/lng/name, and timestamp must be ISO date-time",
+        ip_address: ip,
+        user_id: device.user_id,
+      });
+
+      return new Response(JSON.stringify({ error: "Validation error: invalid sensor payload" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
+
+    const ts = new Date(timestamp).toISOString();
 
     await supabase.from("sensor_data").insert({
       device_id,
-      motion: motion || null,
-      battery: battery || null,
-      location: location || null,
+      motion: String(motion),
+      battery: `${battery}%`,
+      location: location.name,
       timestamp: ts,
       user_id: device.user_id,
     });
 
+    if (battery < 20) {
+      await supabase.from("alerts").insert({
+        device_id,
+        alert_type: "low_battery",
+        severity: "medium",
+        ip_address: ip,
+        user_id: device.user_id,
+      });
+    }
+
     await supabase.from("system_logs").insert({
-      action: "sensor_data_received",
+      action: "data_received",
       device_id,
-      details: `Sensor data received: motion=${motion}, battery=${battery}`,
+      details: `Authorized data received from ${device_id}: motion=${motion}, battery=${battery}%, location=${location.name}`,
       ip_address: ip,
       user_id: device.user_id,
     });
