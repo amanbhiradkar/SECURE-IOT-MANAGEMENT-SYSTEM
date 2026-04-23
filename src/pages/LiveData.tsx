@@ -22,6 +22,28 @@ const LiveData = () => {
     return Number.isNaN(parsed) ? null : parsed;
   };
 
+  const formatTimestamp = (value: string) => {
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?$/);
+    if (!match) return value;
+
+    const [, year, month, day, hour, minute, second = "00", zone = "Z"] = match;
+    const utcTime = Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second));
+    const offsetMatch = zone !== "Z" ? zone.match(/^([+-])(\d{2}):?(\d{2})$/) : null;
+    const offsetMs = offsetMatch
+      ? (offsetMatch[1] === "+" ? 1 : -1) * (Number(offsetMatch[2]) * 60 + Number(offsetMatch[3])) * 60 * 1000
+      : 0;
+
+    return new Intl.DateTimeFormat(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      timeZoneName: "short",
+    }).format(new Date(utcTime - offsetMs));
+  };
+
   const fetchData = async () => {
     const { data: rows } = await supabase
       .from("sensor_data")
@@ -79,7 +101,7 @@ const LiveData = () => {
                 </TableCell>
                 <TableCell className={`font-display text-sm ${Number(getBatteryLevel(entry.battery)) < 20 ? "text-destructive font-bold" : "text-secondary-foreground"}`}>{entry.battery || "—"}</TableCell>
                 <TableCell className="text-muted-foreground text-xs font-display">{entry.location || "—"}</TableCell>
-                <TableCell className="text-muted-foreground text-xs">{new Date(entry.timestamp).toLocaleString()}</TableCell>
+                <TableCell className="text-muted-foreground text-xs">{formatTimestamp(entry.timestamp)}</TableCell>
               </TableRow>
             ))}
           </TableBody>
