@@ -12,7 +12,27 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const navigate = useNavigate();
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error("Enter your email above first");
+      return;
+    }
+    setResetting(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast.success("Password reset email sent. Check your inbox.");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +121,16 @@ const Auth = () => {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Processing..." : isSignUp ? "Create Account" : "Sign In"}
           </Button>
+          {!isSignUp && (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={resetting}
+              className="w-full text-center text-xs text-muted-foreground hover:text-primary transition-colors"
+            >
+              {resetting ? "Sending reset link..." : "Forgot password?"}
+            </button>
+          )}
         </form>
         <p className="text-center mt-6 text-sm text-muted-foreground">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
