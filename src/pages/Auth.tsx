@@ -121,6 +121,16 @@ const Auth = () => {
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Processing..." : isSignUp ? "Create Account" : "Sign In"}
           </Button>
+          {!isSignUp && (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={resetting}
+              className="w-full text-center text-xs text-muted-foreground hover:text-primary transition-colors"
+            >
+              {resetting ? "Sending reset link..." : "Forgot password?"}
+            </button>
+          )}
         </form>
         <p className="text-center mt-6 text-sm text-muted-foreground">
           {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
