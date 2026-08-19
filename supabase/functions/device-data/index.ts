@@ -1,9 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
-const authorizedDevices: Record<string, string> = {
-  DEVICE001: "***REMOVED***",
-};
-
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -27,6 +23,30 @@ const isValidLocation = (value: unknown): value is { lat: number; lng: number; n
   return typeof location.lat === "number" && typeof location.lng === "number" && typeof location.name === "string" && location.name.trim().length > 0;
 };
 
+// Name of runtime secret that holds a JSON map of device_id -> api_key.
+// Example value (stored as a secret, never committed):
+// {"DEVICE001":"<key1>", "DEVICE002":"<key2>"}
+const AUTHORIZED_DEVICES_ENV = "AUTHORIZED_DEVICES";
+
+const loadAuthorizedDevices = (): Record<string, string> => {
+  const raw = Deno.env.get(AUTHORIZED_DEVICES_ENV);
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object") {
+      // Ensure the parsed value is a simple string->string map.
+      const out: Record<string, string> = {};
+      for (const [k, v] of Object.entries(parsed)) {
+        if (typeof v === "string") out[k] = v;
+      }
+      return out;
+    }
+  } catch {
+    // Invalid JSON: fail closed by returning empty map (no devices authorized).
+  }
+  return {};
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -44,6 +64,10 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
     const ip = getClientIp(req);
+
+    // Load authorized devices at runtime from the AUTHORIZED_DEVICES secret.
+    // If missing/invalid, loadAuthorizedDevices returns {} to fail closed.
+    const authorizedDevices = loadAuthorizedDevices();
 
     let body: Record<string, unknown>;
     try {
