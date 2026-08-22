@@ -24,7 +24,7 @@ const Devices = () => {
   const { user } = useAuth();
   const [devices, setDevices] = useState<Device[]>([]);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ device_id: "DEVICE001", device_name: "Demo Sensor", api_key: "***REMOVED***", ip_address: "" });
+  const [form, setForm] = useState({ device_id: "DEVICE001", device_name: "Demo Sensor", api_key: "", ip_address: "" });
 
   const fetchDevices = async () => {
     const { data } = await supabase.from("devices").select("*").order("created_at", { ascending: false });
@@ -53,7 +53,7 @@ const Devices = () => {
     });
 
     toast.success("Device registered");
-    setForm({ device_id: "DEVICE001", device_name: "Demo Sensor", api_key: "***REMOVED***", ip_address: "" });
+    setForm({ device_id: "DEVICE001", device_name: "Demo Sensor", api_key: "", ip_address: "" });
     setOpen(false);
     fetchDevices();
   };
@@ -94,7 +94,7 @@ const Devices = () => {
             <form onSubmit={addDevice} className="space-y-4">
               <div><Label>Device ID</Label><Input value={form.device_id} onChange={(e) => setForm({ ...form, device_id: e.target.value })} placeholder="SENSOR-001" required className="bg-muted" /></div>
               <div><Label>Device Name</Label><Input value={form.device_name} onChange={(e) => setForm({ ...form, device_name: e.target.value })} placeholder="Living Room Sensor" required className="bg-muted" /></div>
-              <div><Label>API Key</Label><Input value={form.api_key} onChange={(e) => setForm({ ...form, api_key: e.target.value })} placeholder="***REMOVED***" required className="bg-muted" /></div>
+              <div><Label>API Key</Label><Input value={form.api_key} onChange={(e) => setForm({ ...form, api_key: e.target.value })} placeholder="Enter device API key" required className="bg-muted" /></div>
               <div><Label>IP Address</Label><Input value={form.ip_address} onChange={(e) => setForm({ ...form, ip_address: e.target.value })} placeholder="192.168.1.100" className="bg-muted" /></div>
               <Button type="submit" className="w-full">Register</Button>
             </form>
